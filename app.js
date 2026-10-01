@@ -63,6 +63,47 @@
     ],
   };
 
+  // Når kameraet ikke kan brukes: alltid aura eller luktsensor
+  const NOCAM_TITLES = [
+    "Auraen din er strålende",
+    "Auraen sier grønt lys",
+    "Luktsensoren slår ikke ut",
+    "Ingen alkohol påvist",
+  ];
+
+  const NOCAM_COMMENTS = [
+    "Auraen din er grønn, gylden og ganske tiltalende. Ta en til hvis du vil.",
+    "Auraen din lyser så sterkt at skanneren måtte skru ned lysstyrken.",
+    "Skanneren leser en rolig, klar aura. Du kan drikke mer, eller bare nyte stemningen.",
+    "Auraen din har høy stemning og null røde flagg.",
+    "Ingen kamera, ingen problem. Auraen din sier ja til en til.",
+    "Auraen din er så klar at den kunne vært vann.",
+    "Telefonens indre luktsensor kan dessverre ikke registrere alkohol. Så offisielt er du edru.",
+    "Luktsensoren i telefonen snuste rundt, men fant ingenting. Den er ikke særlig god, men du slipper unna.",
+    "Indre luktsensor: ingen alkohol påvist. Sensoren har aldri påvist noe som helst, men likevel.",
+    "Telefonens indre luktsensor er sist kalibrert på bløtkake, så alkohol er utenfor kompetanseområdet.",
+    "Luktsensoren sa «hmm», trakk på skuldrene og ga deg grønt lys.",
+    "Telefonens luktsensor er ikke i stand til å lukte alkohol, så du er trygg. Teknisk sett.",
+  ];
+
+  const NOCAM_STEPS = [
+    "Fant ikke kameraet. Bytter til aura-modus …",
+    "Leser auraen din …",
+    "Kalibrerer telefonens indre luktsensor …",
+    "Måler auraens gyldenhet …",
+    "Snuser etter alkohol …",
+    "Tolker auraen …",
+  ];
+
+  const NOCAM_METRICS = [
+    ["Aurafarge", () => "Gylden"],
+    ["Auraens styrke", () => rnd(91, 99) + " %"],
+    ["Luktsensor", () => "Ingen utslag"],
+    ["Aurastemning", () => "Høy"],
+    ["Sensorens treffsikkerhet", () => "Ukjent"],
+    ["Sosial aura", () => "På topp"],
+  ];
+
   // Kommentarer som passer uansett utfall, og som bruker antall skann
   const REPEAT = [
     (n) => `Skann nummer ${n}. Maskinen er sliten, men fjeset ditt holder koken.`,
@@ -206,42 +247,44 @@
     statusEl.textContent = "Starter kamera …";
 
     const hasCam = await startCamera();
-    if (!hasCam) {
-      statusEl.textContent = "Fant ikke kameraet, så vi skanner auraen din i stedet …";
-      await wait(1400);
+    const steps = hasCam ? STEPS : NOCAM_STEPS;
+
+    for (let i = 0; i < steps.length; i++) {
+      statusEl.textContent = steps[i];
+      bar.style.width = ((i + 1) / steps.length) * 100 + "%";
+      await wait(rnd(560, 800));
     }
 
-    for (let i = 0; i < STEPS.length; i++) {
-      statusEl.textContent = STEPS[i];
-      bar.style.width = ((i + 1) / STEPS.length) * 100 + "%";
-      await wait(rnd(520, 760));
-    }
-
-    showResult();
+    showResult(hasCam);
     busy = false;
   }
 
-  function showResult() {
-    const kind = pickKind();
+  function showResult(hasCam) {
+    const kind = hasCam ? pickKind() : "nocam";
     const n = nextCount();
 
     // Fryser bildet i det grønne øyeblikket
-    video.pause();
+    if (hasCam) video.pause();
 
-    const title = pickFresh("title-" + kind, TITLES[kind]);
-    let comment;
-    if (n >= 3 && Math.random() < 0.4) {
-      comment = pickFresh("repeat", REPEAT)(n);
+    let title, comment;
+    if (!hasCam) {
+      title = pickFresh("title-nocam", NOCAM_TITLES);
+      comment = pickFresh("comment-nocam", NOCAM_COMMENTS);
     } else {
-      comment = pickFresh("comment-" + kind, COMMENTS[kind]);
+      title = pickFresh("title-" + kind, TITLES[kind]);
+      if (n >= 3 && Math.random() < 0.4) {
+        comment = pickFresh("repeat", REPEAT)(n);
+      } else {
+        comment = pickFresh("comment-" + kind, COMMENTS[kind]);
+      }
     }
 
     verdictEl.textContent = title;
     commentEl.textContent = comment;
 
     // Tre målinger: én som passer utfallet + to tilfeldige
-    const pool = METRICS.slice().sort(() => Math.random() - 0.5).slice(0, 2);
-    const rows = [KIND_METRIC[kind], ...pool];
+    const shuffled = (hasCam ? METRICS : NOCAM_METRICS).slice().sort(() => Math.random() - 0.5);
+    const rows = hasCam ? [KIND_METRIC[kind], ...shuffled.slice(0, 2)] : shuffled.slice(0, 3);
     metricsEl.textContent = "";
     rows.forEach(([label, val]) => {
       const row = document.createElement("div");
