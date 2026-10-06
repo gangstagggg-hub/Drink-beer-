@@ -1,4 +1,4 @@
-const CACHE = "enda-en-v2";
+const CACHE = "enda-en-v3";
 const ASSETS = [
   "./",
   "index.html",

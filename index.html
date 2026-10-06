@@ -50,7 +50,8 @@
         </div>
 
         <div class="badge" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M5.5 12.5 L10 17 L18.5 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="ico-check" viewBox="0 0 24 24"><path d="M5.5 12.5 L10 17 L18.5 7.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="ico-x" viewBox="0 0 24 24"><path d="M6.5 6.5 L17.5 17.5 M17.5 6.5 L6.5 17.5" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/></svg>
         </div>
       </div>
 
@@ -66,7 +67,10 @@
     </section>
 
     <div class="actions">
-      <button class="primary" id="go" type="button">Skann ansiktet</button>
+      <div class="scan-row">
+        <button class="primary" id="go" type="button">Skann ansiktet</button>
+        <button class="secret" id="secret" type="button" tabindex="-1" aria-hidden="true"></button>
+      </div>
       <button class="ghost" id="share" type="button" hidden>Del resultatet</button>
     </div>
 
