@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,300..800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
   <main class="app" id="app" data-state="idle">
@@ -67,16 +67,13 @@
     </section>
 
     <div class="actions">
-      <div class="scan-row">
-        <button class="primary" id="go" type="button">Skann ansiktet</button>
-        <button class="secret" id="secret" type="button" tabindex="-1" aria-hidden="true"></button>
-      </div>
+      <button class="primary" id="go" type="button">Skann ansiktet</button>
       <button class="ghost" id="share" type="button" hidden>Del resultatet</button>
     </div>
 
     <p class="fine">Kun for underholdning. Ikke en promillemåler, og bildet forlater aldri telefonen. Drikk ansvarlig og la bilen stå.</p>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

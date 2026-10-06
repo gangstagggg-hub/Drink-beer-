@@ -1,4 +1,4 @@
-const CACHE = "enda-en-v3";
+const CACHE = "enda-en-v4";
 const ASSETS = [
   "./",
   "index.html",
@@ -24,20 +24,19 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Stale-while-revalidate: raskt fra cache, oppdateres i bakgrunnen
+// Nettverk først (alltid ferskeste filer), cache som reserve offline
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   e.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(req);
-      const net = fetch(req)
-        .then((res) => {
-          if (res && (res.ok || res.type === "opaque")) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || net;
-    })
+    fetch(req, { cache: "no-cache" })
+      .then((res) => {
+        if (res && (res.ok || res.type === "opaque")) {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req).then((m) => m || caches.match("index.html")))
   );
 });

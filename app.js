@@ -63,6 +63,62 @@
     ],
   };
 
+  // Skjult knapp: "du har drukket for mye"
+  const TOOMUCH_TITLES = [
+    "Du har drukket for mye",
+    "Nå er det nok",
+    "Skanneren sier stopp",
+    "Rødt lys, venn",
+  ];
+
+  const TOOMUCH_COMMENTS = [
+    "Skanneren ser to av deg. Begge ser slitne ut.",
+    "Ansiktet ditt har forlatt samtalen. Resten av deg bør følge etter.",
+    "Du fikk 0 av 10 i kategorien «rett linje». Vann nå, takk.",
+    "Øynene dine peker i hver sin retning. Imponerende, men på tide å stoppe.",
+    "Skanneren har sett nok. Den ba om en pause og et glass vann.",
+    "Smilet ditt er fortsatt her, men resten av ansiktet er på vei hjem.",
+    "Resultat: ikke en til. Anbefaling: vann, litt brød og en venn som følger deg hjem.",
+    "Skanneren klarte ikke å fokusere på deg. Det sier mer om deg enn om kameraet.",
+    "Du har nådd nivået der alle er din beste venn. Vennene dine er ikke enige.",
+    "Ansiktet ditt sier «jeg har det helt fint». Algoritmen sier «jeg tviler».",
+    "Du svaier. Skanneren prøvde å kalibrere seg etter deg, men ble sjøsyk.",
+    "Blikket glir av som såpe i dusjen. Ta en pause.",
+    "Skanneren gir deg rødt kort. Det er ikke straff, men omsorg.",
+    "Vi anbefaler vann først, deretter kebab.",
+    "Bartenderen har fått beskjed. Svaret hans var «vi vet».",
+    "Du er så glad at skanneren lurte på om du hadde vunnet noe. Det har du ikke. I kveld vinner vannet.",
+  ];
+
+  const TOOMUCH_NOCAM_COMMENTS = [
+    "Auraen din er uskarp i kantene og lukter litt lørdag.",
+    "Auraen din har begynt å vibrere. Det er et dårlig tegn.",
+    "Telefonens indre luktsensor har ikke peiling, men selv den snudde seg bort.",
+    "Auraen din har gått fra gylden til «kanskje en kebab».",
+    "Luktsensoren kan ikke lukte alkohol, men den er ganske sikker på at du trenger en vannpause.",
+    "Auraen din ser ut som en bildekk i en dusj. Ta det med ro nå.",
+  ];
+
+  const TOOMUCH_METRICS = [
+    ["Blikkfokus", () => rnd(8, 34) + " %"],
+    ["Rett linje", () => "Ikke funnet"],
+    ["Ansiktsbalanse", () => "Svaiende"],
+    ["Kinnholdning", () => "Gir seg"],
+    ["Vannbehov", () => "Kritisk"],
+    ["Kebabbehov", () => "Høyt"],
+    ["Sosialt filter", () => "Av"],
+    ["Danseevne", () => "Overvurdert"],
+    ["Øyebrynskontroll", () => "Mistet"],
+  ];
+
+  const TOOMUCH_NOCAM_METRICS = [
+    ["Aurafarge", () => "Uskarp"],
+    ["Auraens stabilitet", () => rnd(10, 35) + " %"],
+    ["Luktsensor", () => "Trekker på skuldrene"],
+    ["Vannbehov", () => "Kritisk"],
+    ["Kebabbehov", () => "Høyt"],
+  ];
+
   // Når kameraet ikke kan brukes: alltid aura eller luktsensor
   const NOCAM_TITLES = [
     "Auraen din er strålende",
@@ -234,7 +290,7 @@
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   let busy = false;
 
-  async function scan() {
+  async function scan(tooMuch) {
     if (busy) return;
     busy = true;
 
@@ -255,21 +311,29 @@
       await wait(rnd(560, 800));
     }
 
-    showResult(hasCam);
+    showResult(hasCam, !!tooMuch);
     busy = false;
   }
 
-  function showResult(hasCam) {
-    const kind = hasCam ? pickKind() : "nocam";
+  function showResult(hasCam, tooMuch) {
+    const kind = tooMuch ? "mye" : hasCam ? pickKind() : "nocam";
     const n = nextCount();
+    const shuffle = (list) => list.slice().sort(() => Math.random() - 0.5);
 
-    // Fryser bildet i det grønne øyeblikket
+    // Fryser bildet i øyeblikket
     if (hasCam) video.pause();
 
-    let title, comment;
-    if (!hasCam) {
+    let title, comment, rows;
+    if (tooMuch) {
+      title = pickFresh("title-mye", TOOMUCH_TITLES);
+      comment = hasCam
+        ? pickFresh("comment-mye", TOOMUCH_COMMENTS)
+        : pickFresh("comment-mye-nocam", TOOMUCH_NOCAM_COMMENTS);
+      rows = shuffle(hasCam ? TOOMUCH_METRICS : TOOMUCH_NOCAM_METRICS).slice(0, 3);
+    } else if (!hasCam) {
       title = pickFresh("title-nocam", NOCAM_TITLES);
       comment = pickFresh("comment-nocam", NOCAM_COMMENTS);
+      rows = shuffle(NOCAM_METRICS).slice(0, 3);
     } else {
       title = pickFresh("title-" + kind, TITLES[kind]);
       if (n >= 3 && Math.random() < 0.4) {
@@ -277,14 +341,12 @@
       } else {
         comment = pickFresh("comment-" + kind, COMMENTS[kind]);
       }
+      rows = [KIND_METRIC[kind], ...shuffle(METRICS).slice(0, 2)];
     }
 
     verdictEl.textContent = title;
     commentEl.textContent = comment;
 
-    // Tre målinger: én som passer utfallet + to tilfeldige
-    const shuffled = (hasCam ? METRICS : NOCAM_METRICS).slice().sort(() => Math.random() - 0.5);
-    const rows = hasCam ? [KIND_METRIC[kind], ...shuffled.slice(0, 2)] : shuffled.slice(0, 3);
     metricsEl.textContent = "";
     rows.forEach(([label, val]) => {
       const row = document.createElement("div");
@@ -298,13 +360,14 @@
 
     countEl.textContent = n === 1 ? "Første skann i kveld" : `Skann nummer ${n} i kveld`;
 
+    app.dataset.verdict = tooMuch ? "mye" : "ok";
     app.dataset.state = "result";
     resultEl.hidden = false;
     go.disabled = false;
     go.textContent = "Skann på nytt";
     if (navigator.share || navigator.clipboard) shareBtn.hidden = false;
 
-    if (navigator.vibrate) navigator.vibrate([30, 50, 70]);
+    if (navigator.vibrate) navigator.vibrate(tooMuch ? [90, 50, 90, 50, 180] : [30, 50, 70]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -321,7 +384,12 @@
     } catch (_) { /* brukeren avbrøt */ }
   }
 
-  go.addEventListener("click", scan);
+  // Skjult sone: de ytterste ~30 px på høyre kant av hovedknappen
+  go.addEventListener("click", (e) => {
+    const r = go.getBoundingClientRect();
+    const hidden = e.clientX > 0 && e.clientX >= r.right - 30;
+    scan(hidden);
+  });
   shareBtn.addEventListener("click", share);
 
   /* ---------- Offline / installasjon ---------- */

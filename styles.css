@@ -11,6 +11,8 @@
   --amber: #d97f15;
   --green: #35d27c;
   --green-deep: #1d9f58;
+  --red: #ff6a4d;
+  --red-deep: #d93a22;
   --muted: #b9a58a;
   --line: rgba(255, 243, 211, 0.14);
   --font: "Bricolage Grotesque", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -150,6 +152,7 @@ video.on { opacity: 1; }
   transform: scale(0);
 }
 .badge svg { width: 62%; height: 62%; }
+.ico-x { display: none; }
 
 /* Status */
 .status {
@@ -205,6 +208,16 @@ video.on { opacity: 1; }
 [data-state="result"] .progress { display: none; }
 [data-state="result"] .badge { animation: pop 0.55s 0.15s cubic-bezier(0.2, 1.7, 0.4, 1) forwards; }
 @keyframes pop { from { transform: scale(0) rotate(-25deg); } to { transform: scale(1) rotate(0); } }
+
+/* Resultat: for mye */
+[data-state="result"][data-verdict="mye"] .lens-wrap {
+  background: var(--red);
+  box-shadow: 0 0 0 6px rgba(255, 106, 77, 0.14), 0 0 48px rgba(255, 106, 77, 0.35);
+}
+[data-verdict="mye"] .badge { background: linear-gradient(145deg, #ff8a70, var(--red-deep)); }
+[data-verdict="mye"] .ico-check { display: none; }
+[data-verdict="mye"] .ico-x { display: block; }
+[data-verdict="mye"] h2 { color: var(--red); }
 
 .result { width: 100%; text-align: center; }
 .result:not([hidden]) { animation: rise 0.5s 0.25s both ease-out; }
@@ -270,6 +283,7 @@ button:focus-visible { outline: 3px solid var(--foam); outline-offset: 3px; }
   box-shadow: 0 8px 28px rgba(246, 183, 60, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .primary:disabled { opacity: 0.55; cursor: default; }
+
 .ghost {
   color: var(--foam);
   background: transparent;
